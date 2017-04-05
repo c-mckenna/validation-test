@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>jQuery Validation Test</title>
+</head>
+<body>
+	<form id="client-search" method="post" action="index.html">
+		<input type="hidden" id="mutually-exclusive-rule" name="mutually-exclusive-rule" />
+		<label for="file-number">File Number</label>
+		<input type="text" id="file-number" name="file-number" />
+		<strong>or</strong>
+		<label for="uin">UIN</label>
+		<input type="text" id="uin" name="uin" />
+		
+		<hr />
+		<strong>OR</strong>
+		<hr />
+		
+		<label for="surname">Surname</label>
+		<input type="text" id="surname" name="surname" />
+		<label for="first-name">First Name</label>
+		<input type="text" id="first-name" name="first-name" />
+		
+		<hr />
+		
+		<input type="submit" value="Search" />
+		<input type="button" value="Clear" />
+	</form>
+
+	<script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
+	<script src="jquery.validate.js"></script>
+	<script src="additional-methods.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+
+			var hasIdSearch = function() {
+				return $("#file-number").is(":not(:blank)") || $("#uin").is(":not(:blank)");
+			}
+			
+			var hasBioSearch = function() {
+				return $("#surname").is(":not(:blank)") || $("#first-name").is(":not(:blank)");
+			}
+
+			$.validator.addMethod("mutuallyExclusive", function(value, element, param) {
+				if((hasIdSearch() && hasBioSearch()) || (!hasIdSearch() && !hasBioSearch()))
+					return false;
+				
+				return true;
+			},
+			function() {
+				return 'Please enter a valid search combination';
+			});
+			
+			$.validator.addMethod("xor", function(value, element, param) {
+				var otherValue = $(param[0]).val();
+				return this.optional(element) || ((value && !otherValue) || (!value && otherValue));
+			},
+			jQuery.validator.format('{1}'));
+
+			$("#client-search").validate({
+				onkeyup: false,
+				ignore: "",
+				rules: {
+					"file-number": {
+						pattern: /^([A-Za-z])([A-Za-z ]{1,3})([0-9]{1,6})([A-Za-z]?)$/,
+						xor: ["#uin", "Please enter only a file number or UIN"]
+					},
+					"uin": {
+						digits: true,
+						xor: ["#file-number", "Please enter only a file number or UIN"]
+					},
+					"surname": {
+						required: function() {
+							return !hasIdSearch() && hasBioSearch();
+						}
+					},
+					"mutually-exclusive-rule": {
+						mutuallyExclusive: true
+					}
+				}
+			});
+			
+		});
+	</script>
+</body>
+</html>
